@@ -493,9 +493,12 @@ on Stevens-MacBook-Pro.local
 config.status:666: creating Makefile
 config.status:726: error: cannot find input file: Makefile.in
 <<<<<<< HEAD
+<<<<<<< HEAD
 =======
 >>>>>>> origin/nixos-sial-patch
 =======
+=======
+>>>>>>> origin/sial-nix
 
 ## ---------------------- ##
 ## Running config.status. ##
@@ -514,4 +517,7 @@ on Stevens-MacBook-Pro.local
 
 config.status:666: creating Makefile
 config.status:726: error: cannot find input file: Makefile.in
+<<<<<<< HEAD
+>>>>>>> origin/sial-nix
+=======
 >>>>>>> origin/sial-nix
