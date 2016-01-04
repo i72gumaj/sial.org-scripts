@@ -1,12 +1,9 @@
-#!/usr/bin/perl -w
+#!/usr/bin/env perl
 #
 # Means of prompting where human interaction required.
-#
-# The author disclaims all copyrights and releases this script into the
-# public domain.
 
-require 5;
 use strict;
+use warnings;
 
 use Term::ReadKey;
 
@@ -137,12 +134,12 @@ sub parse_spec {
   # sanity check on specification to prevent key-read stalls
   unless ($spec) {
     remark('error', "unable to parse specification '$string'");
-    exit 103;
+    exit 78;
   } else {
     unless (grep { defined and /^\d$/ } $spec->{default},
       values %{$spec->{keys}}) {
       remark('error', "no valid exit codes in specification '$string'");
-      exit 103;
+      exit 78;
     }
   }
 
@@ -210,7 +207,7 @@ sub remark {
 
 # a generic help blarb
 sub help {
-  print <<"HELP";
+  warn <<"HELP";
 Usage: $0 [opts] [prompt message]
 
 Means to prompt for human interaction.
@@ -228,7 +225,7 @@ Options:
 Run perldoc(1) on this script for additional documentation.
 
 HELP
-  exit;
+  exit 64;
 }
 
 =head1 NAME
@@ -331,7 +328,7 @@ Timeout exit status (may be 142, see L<"BUGS"> for details).
 
 Error parsing custom timeout duration.
 
-=tiem B<103>
+=item B<103>
 
 Error parsing key specification.
 
@@ -361,12 +358,25 @@ perl(1)
 
 =head1 AUTHOR
 
-Jeremy Mates, http://sial.org/contact/
+thrig - Jeremy Mates (cpan:JMATES) C<< <jmates at cpan.org> >>
 
 =head1 COPYRIGHT
 
-The author disclaims all copyrights and releases this script into the
-public domain.
+Copyright (c) 2015 Jeremy Mates
+
+     Permission to use, copy, modify, and/or distribute this software for
+     any purpose with or without fee is hereby granted, provided that the
+     above copyright notice and this permission notice appear in all
+     copies.
+
+     THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL
+     WARRANTIES WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED
+     WARRANTIES OF MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE
+     AUTHOR BE LIABLE FOR ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL
+     DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM LOSS OF USE, DATA
+     OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER
+     TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
+     PERFORMANCE OF THIS SOFTWARE.
 
 =head1 HISTORY
 

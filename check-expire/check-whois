@@ -1,4 +1,4 @@
-#!/usr/bin/perl -w
+#!/usr/bin/env perl
 #
 # Script to parse domain whois information for expiration dates. Returns
 # key=value data about each domain mentioned on the command line.
@@ -7,6 +7,7 @@
 # to implement right now).
 
 use strict;
+use warnings;
 
 use Date::Parse qw(str2time);
 use Net::Whois::Raw;
@@ -17,11 +18,11 @@ getopts 'h?t', \%opts;
 
 if ( exists $opts{h} or exists $opts{'?'} or not @ARGV ) {
   print_help();
-  exit 101;
+  exit 64;
 }
 
 for my $domain (@ARGV) {
-  my %domain_info = ();
+  my %domain_info;
   $domain_info{name} = $domain;
 
   my $whois_str;
@@ -58,7 +59,7 @@ for my $domain (@ARGV) {
 }
 
 sub print_help {
-  print <<"END_USAGE";
+  warn <<"END_USAGE";
 Usage: $0 [-t] example.com [example.org ..]
 
 Parse whois for expiration dates.

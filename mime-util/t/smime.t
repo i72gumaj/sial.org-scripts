@@ -1,8 +1,9 @@
-#!/usr/bin/perl -w
+#!/usr/bin/env perl
 #
 # Test routines for SMIME operations in mime-util script.
 
 use strict;
+use warnings;
 use Fatal qw(open);
 use Test::More tests => 3;
 
@@ -25,7 +26,7 @@ is( test_unmime( 'message.decrypt', \@command ),
   $message_txt, 'command: ' . join( ' ', @command, 'message.decrypt' ) );
 
 diag("ignore warning about no MIME data from message.txt");
-# also need defined behaviour for raw file through unmime process
+# also need defined behavior for raw file through unmime process
 is( test_unmime( 'message.txt', \@command ),
   $message_txt, 'command: ' . join( ' ', @command, 'message.txt' ) );
 

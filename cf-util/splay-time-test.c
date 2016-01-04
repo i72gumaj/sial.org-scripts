@@ -1,34 +1,65 @@
 /*
-Based on code at http://cfwiki.org/cfwiki/index.php/SplayTime_testing
-
-Usage: splay-time-test host.example.org [host2 ..]
-
-TODO what do the output times mean? miliseconds?
-*/
+ * Based on code at http://cfwiki.org/cfwiki/index.php/SplayTime_testing
+ */
 
 #include <stdio.h>
 
-#define CF_MACROALPHABET 61    /* a-z, A-Z plus a bit */
-#define CF_HASHTABLESIZE 4969 /* prime number */
+// https://github.com/thrig/goptfoo
+#include <goptfoo.h>
 
-int main(int argc, char * argv[]) {
-  int i, time, hash;
-  char *temp, *prompt;
+#define CF_MACROALPHABET 61     /* a-z, A-Z plus a bit */
+#define CF_HASHTABLESIZE 4969   /* prime number */
 
-  time = 1; /* equivalent to SplayTime = ( N ) */
+/* equivalent to SplayTime = ( N ) */
+unsigned long Flag_SplayTime = 1;       // -n
 
-  for (i = 1; i < argc; i++) {
-    hash = str2hash(argv[i]);
-    printf("host=%s hash=%d time=%d\n", argv[i], hash, (int)(time*60*hash/CF_HASHTABLESIZE));
-  }
+void emit_help(void);
+int str2hash(char *name);
+
+int main(int argc, char *argv[])
+{
+    int ch, hash;
+
+    while ((ch = getopt(argc, argv, "h?n:")) != -1) {
+        switch (ch) {
+
+        case 'n':
+            Flag_SplayTime = flagtoul(ch, optarg, 0UL, (unsigned long) INT_MAX);
+            break;
+
+        case 'h':
+        case '?':
+        default:
+            emit_help();
+            /* NOTREACHED */
+        }
+    }
+    argc -= optind;
+    argv += optind;
+
+    while (*argv) {
+        hash = str2hash(*argv);
+        printf("host=%s hash=%d time=%d\n", *argv, hash,
+               (int) Flag_SplayTime * 60 * hash / CF_HASHTABLESIZE);
+        argv++;
+    }
+
+    exit(EXIT_SUCCESS);
 }
 
-int str2hash(char *name) {
-  int i, slot = 0;
+void emit_help(void)
+{
+    fprintf(stderr, "Usage: splay-time-test [-n int] host1 [host2 ..]\n");
+    exit(EX_USAGE);
+}
 
-  for (i = 0; name[i] != '\0'; i++) {
-    slot = (CF_MACROALPHABET * slot + name[i]) % CF_HASHTABLESIZE;
-  }
+int str2hash(char *name)
+{
+    int slot = 0;
 
-  return slot;
+    for (int i = 0; name[i] != '\0'; i++) {
+        slot = (CF_MACROALPHABET * slot + name[i]) % CF_HASHTABLESIZE;
+    }
+
+    return slot;
 }

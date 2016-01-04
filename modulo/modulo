@@ -16,16 +16,10 @@
 #
 #   $ modulo 2 node001
 #   1
-#
-# For more usage ideas, see:
-# http://sial.org/howto/cfengine/examples/resolver/
-#
-# The author disclaims all copyrights and releases this script into the
-# public domain.
 
 if [ -z "$1" ]; then
   echo "Usage: `basename $0` what-to-modulo-by value-to-modulo" >&2
-  exit 1
+  exit 64
 fi
 
 # read modulus to use
@@ -44,7 +38,4 @@ if [ -z "$NUMBER" ]; then
   fi
 fi
 
-RESULT=`expr $NUMBER % $MODULUS`
-#echo "$NUMBER % $MODULUS = $RESULT"
-
-echo $RESULT
+exec expr $NUMBER % $MODULUS

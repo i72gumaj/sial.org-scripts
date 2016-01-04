@@ -1,15 +1,13 @@
-#!/usr/bin/perl -w
+#!/usr/bin/env perl
 #
 # Convert multiple RSA and X509 files between different encoding formats
 # such as PEM and DER. Usage:
 #
 # convert2der *.prv *.key *.crt
 # convert2der --inform=DER --outform=PEM *.prv *.key *.crt
-#
-# The author disclaims all copyrights and releases this script into the
-# public domain.
 
 use strict;
+use warnings;
 
 use File::AtomicWrite ();
 use File::Basename qw(basename);
@@ -38,7 +36,7 @@ GetOptions(
   'outform=s' => \$options{outform},
   'help|h|?'  => sub {
     print "Usage: $basename [--inform=opt] [--outform=opt] file [..fileN]\n";
-    exit 100;
+    exit 64;
   },
 );
 
@@ -67,7 +65,8 @@ for my $filename ( grep -f, @ARGV ) {
   };
   if ($@) {
     chomp($@);
-    die "error: could not create File::AtomicWrite object: $@\n";
+    warn "error: could not create File::AtomicWrite object: $@\n";
+    exit 74;
   }
   local $SIG{TERM} = sub { undef $writer };
 
@@ -87,7 +86,8 @@ for my $filename ( grep -f, @ARGV ) {
   eval { $writer->commit(); };
   if ($@) {
     chomp($@);
-    die "error: cannot rename to $file_options{file}: $@\n";
+    warn "error: cannot rename to $file_options{file}: $@\n";
+    exit 73;
   }
 }
 
@@ -101,7 +101,7 @@ sub template_cmd {
   return unless @command;
 
   for my $str (@command) {
-    $str =~ s/ %{ ([^}]+) } / $metadata->{$1} || '' /egx;
+    $str =~ s/ \Q%{\E ([^}]+) \Q}\E / $metadata->{$1} || '' /egx;
   }
 
   return @command;

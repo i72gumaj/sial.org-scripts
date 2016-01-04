@@ -1,15 +1,13 @@
-#!/usr/bin/perl -w
+#!/usr/bin/env perl
 #
 # Generate crontab(5) compatible time specification for a command to run
 # in the near future. The at(1) system would also make sense for "near
 # future" jobs, except where jobs must run from cron to replicate
 # environment and other settings set there. Run perldoc(1) on this
 # script for additional documentation.
-#
-# The author disclaims all copyrights and releases this script into the
-# public domain.
 
 use strict;
+use warnings;
 
 use Getopt::Long qw(GetOptions);
 use POSIX qw(strftime);
@@ -26,7 +24,8 @@ my $SECONDS_IN_ADVANCE = 99;
 END {
   # Report problems when writing to stdout (perldoc perlopentut)
   unless ( close(STDOUT) ) {
-    die "error: problem closing STDOUT: $!\n";
+    warn "error: problem closing STDOUT: $!\n";
+    exit 74;
   }
 }
 
@@ -107,7 +106,7 @@ sub duration2seconds {
 }
 
 sub print_help {
-  print <<"END_HELP";
+  warn <<"END_HELP";
 Usage: $0 [options] [cron command]
 
 Generate cron timestamp for single run in the near future.
@@ -116,14 +115,14 @@ Options:
 
   --help, -h, -?   Generate this help message.
 
-  --comment "rem"  Specify a comment to preceede cron command with.
+  --comment "rem"  Specify a comment to precede cron command with.
   --format  "ftm"  Custom strftime(3) format for cron timestamp.
   --lead    "sec"  Specify a custom lead time.
   --gmtime, -g     Use gmtime() instead of default localtime().
   
 END_HELP
 
-  exit 100;
+  exit 64;
 }
 
 =head1 NAME
@@ -169,7 +168,7 @@ Prints a brief usage note about the script.
 
 =item B<--comment>=I<comment string>, B<-c>
 
-Specifies a comment that will preceed the crontab entry.
+Specifies a comment that will precede the crontab entry.
 
   $ kronsoon -c "comment" date
   # comment
@@ -218,11 +217,24 @@ perl(1), crontab(5)
 
 =head1 AUTHOR
 
-Jeremy Mates, http://sial.org/contact/
+thrig - Jeremy Mates (cpan:JMATES) C<< <jmates at cpan.org> >>
 
 =head1 COPYRIGHT
 
-The author disclaims all copyrights and releases this script into the
-public domain.
+Copyright (c) 2015 Jeremy Mates
+
+     Permission to use, copy, modify, and/or distribute this software for
+     any purpose with or without fee is hereby granted, provided that the
+     above copyright notice and this permission notice appear in all
+     copies.
+
+     THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL
+     WARRANTIES WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED
+     WARRANTIES OF MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE
+     AUTHOR BE LIABLE FOR ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL
+     DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM LOSS OF USE, DATA
+     OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER
+     TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
+     PERFORMANCE OF THIS SOFTWARE.
 
 =cut
