@@ -1,0 +1,171 @@
+#!/usr/bin/env perl
+#
+# Converts epoch times to human parsable dates. Accepts list of epoch
+# dates (integers) usually via arguments:
+#
+#   epoch2date `perl -E 'say time'`
+#   echo 1059673440 | xargs epoch2date
+#   echo 1059673440 1404433529 | epoch2date -
+#
+# Run perldoc(1) on this file for additional documentation.
+
+use strict;
+use warnings;
+
+use File::Basename qw(basename);
+use POSIX qw(strftime);
+
+my $basename = basename $0;
+
+use Getopt::Std;
+my %opts;
+getopts( 'h?f:gl', \%opts );
+print_help() if exists $opts{h} or exists $opts{'?'};
+
+if ( not @ARGV or exists $opts{h} or exists $opts{'?'} ) {
+  warn "Usage: $basename [-f strftime] [-g|-l] [epoch [epoch ...]|-]\n";
+  exit 64;
+}
+
+my $format = $opts{f} || '%Y-%m-%d %H:%M:%S %Z';
+$format =~ s/(\\.)/qq!"$1"!/eeg;
+
+my $timefunc = sub { localtime $_[0] };
+$timefunc = sub { gmtime $_[0] }
+  if $basename eq 'epoch2gmdate';
+$timefunc = sub { localtime $_[0] }
+  if exists $opts{l};
+$timefunc = sub { gmtime $_[0] }
+  if exists $opts{g};
+
+# but use xargs or the like if there is lots of input
+@ARGV = <STDIN> if $ARGV[0] eq '-';
+
+for my $entry (@ARGV) {
+  # negative epoch dubious? but why not
+  for my $epoch ( $entry =~ m/(-?[0-9]+)/g ) {
+    print strftime( $format, $timefunc->($epoch) ), "\n";
+  }
+}
+
+sub print_help {
+  warn <<"HELP";
+Usage: $0 [opts] [epoch [epoch ...]|-]
+
+Converts unix epoch to human readable dates.
+
+Options:
+  -h/-?   Display this message
+
+  -f fmt  strftime(3) format for output date.
+
+  -g      Use gmtime() call.
+  -l      Use localtime() call (default).
+
+Run perldoc(1) on this script for additional documentation.
+HELP
+  exit 64;
+}
+
+END {
+  # Report problems when writing to stdout (perldoc perlopentut)
+  unless ( close(STDOUT) ) {
+    warn "error: problem closing STDOUT: $!\n";
+    exit 74;
+  }
+}
+
+__END__
+
+=head1 NAME
+
+epoch2date - converts unix epoch to human readable dates
+
+=head1 SYNOPSIS
+
+  $ epoch2date `perl -E 'say time'`
+  $ echo 1059673440 | xargs epoch2date
+  $ echo 1059673440 1404433529 | epoch2date -
+
+  $ epoch2date -g 1404662217
+  $ epoch2date -l 1404662217
+  $ TZ=US/Pacific epoch2date 1404662217
+
+=head1 DESCRIPTION
+
+Converts unix epoch seconds to human readable dates.
+
+=head1 OPTIONS
+
+This script currently supports the following command line switches:
+
+=over 4
+
+=item B<-f> I<format>
+
+L<strftime(3)> format for output date. Default is something ISO 8601ish.
+
+=item B<-g>
+
+Use the L<gmtime()> function (a.k.a. UTC or Zulu or +0000).
+
+=item B<-h>, B<-?>
+
+Prints a brief usage note.
+
+=item B<-l>
+
+Use the C<localtime> function. This is the default. However, the author now
+sets all systems to use UTC (to avoid the various pitfalls of timezones that
+suffer from Daylight Saving Time), and obtains the local time zone when
+necessary via:
+
+  $ TZ=US/Pacific epoch2date ...
+
+This is explicit (danger! a timezone that wobbles!) and provides for better
+documentation than a short option flag does.
+
+=back
+
+=head1 BUGS
+
+=head2 Reporting Bugs
+
+Newer versions of this script may be available from:
+
+http://github.com/thrig/sial.org-scripts/tree/master
+
+If the bug is in the latest version, send a report to the author.
+Patches that fix problems or add new features are welcome.
+
+=head2 Known Issues
+
+No known bugs but probably lots.
+
+=head1 SEE ALSO
+
+L<strftime(3)>
+
+=head1 AUTHOR
+
+thrig - Jeremy Mates (cpan:JMATES) C<< <jmates at cpan.org> >>
+
+=head1 COPYRIGHT
+
+Copyright (c) 2015 Jeremy Mates
+
+     Permission to use, copy, modify, and/or distribute this software for
+     any purpose with or without fee is hereby granted, provided that the
+     above copyright notice and this permission notice appear in all
+     copies.
+
+     THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL
+     WARRANTIES WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED
+     WARRANTIES OF MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE
+     AUTHOR BE LIABLE FOR ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL
+     DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM LOSS OF USE, DATA
+     OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER
+     TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
+     PERFORMANCE OF THIS SOFTWARE.
+
+=cut

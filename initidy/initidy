@@ -1,15 +1,13 @@
-#!/usr/bin/perl -w
+#!/usr/bin/env perl
 #
 # Reformats .ini style preference files in format supported by the
 # Config::Tiny perl module.
 #
 # TODO options to customize output (blank line handling, comment string,
 # indents, sorting).
-#
-# The author disclaims all copyrights and releases this script into the
-# public domain.
 
 use strict;
+use warnings;
 
 use File::AtomicWrite ();
 
@@ -226,7 +224,7 @@ sub initidy {
 }
 
 sub print_help {
-  print <<"HELP";
+  warn <<"HELP";
 Usage: $0 [options] [file [file2 ..]]
 
 Tidy .ini format data.
@@ -237,5 +235,5 @@ Options:
   -a     Enable autoformat.
 
 HELP
-  exit 100;
+  exit 64;
 }

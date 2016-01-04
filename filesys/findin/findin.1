@@ -1,0 +1,42 @@
+.TH FINDIN 1 
+.nh
+.SH NAME
+findin -- find files in PATH or other lists of directories
+.SH SYNOPSIS
+Find ls in PATH, find a glob(3) expression under MANPATH directories, or search directories passed via standard input:
+
+.B $ findin ls
+
+.B $ findin -q 'man*' MANPATH
+
+.B $ (echo /bin; echo /sbin) | findin 'l*' -
+.SH "DESCRIPTION"
+Returns zero if files found; otherwise some non-zero value on error or if no files are matched. Files found will be printed to standard output. Errors or usage information will be printed to standard error.
+
+The -? or -h options will show usage information. The -q option will mask what usually are just false alarms from glob(3).
+.SH ERRORS
+Diagnostics or usage notes are printed to standard error. sysexits(3) exit codes are used where possible, though a 1 will be returned if nothing is found.
+.SH ENVIRONMENT
+PATH is used by default; any arbitrary colon-delimited environment variable can be used if specified as the second argument to the program. Note that certain environment variables are not exported to child processes. For example, the Z-Shell does not export FPATH, as that is internal to the ZSH completion system.
+
+.B $ export FPATH; findin _mplayer FPATH
+
+Directories passed via standard input must be specified one per line. Returning to the Z-Shell $fpath example, another solution would be:
+
+.B $ echo $fpath | tr ' ' '\\\\n' | findin _mplayer -
+
+.SH "SEE ALSO"
+find(1), findup(1), glob(3), zshexpn(1), zshparam(1)
+
+Using the Z-Shell (zsh), this utility might be replaced with expressions such as:
+
+.B % print -l ${^fpath}/_pgrep(N)
+
+.B % print -l ${^path}/perl(N)
+
+.B % print -l ${^${(s.:.)PATH}}/perl(N)
+
+.SH BUGS
+No known issues.
+.SH AUTHOR
+Jeremy Mates

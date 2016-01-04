@@ -1,0 +1,23 @@
+#!/usr/bin/env zsh
+#
+# Wrapper thingy called from vi to preview and play lilypond music, OpenBSD
+# version, so you'll need the OpenBSD open(1) I wrote and etc.
+
+set -e
+
+MRF=$(glf --exclude='[.](?!ly$)' '\.ly' .)
+[[ -z $MRF ]] && {
+  echo >&2 "no *.ly found (or glf problem)"
+  exit 1
+}
+
+MRP=${MRF:s/\.ly/.pdf}
+
+[[ ! -e $MRP || $MRF -nt $MRP ]] && {
+  lilypond --silent -dno-point-and-click $MRF
+  open $MRP
+}
+
+[[ `mixerctl -n outputs.hp_mute` == "off" ]] && {
+  tlymidity *.midi(om[1])
+}

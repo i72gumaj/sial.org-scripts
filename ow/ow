@@ -1,4 +1,4 @@
-#!/usr/bin/perl -w
+#!/usr/bin/env perl
 #
 # Command line shortcuts and directory to URL mapping. Customize the
 # %open list (commands to handle URL with) and change the default_open
@@ -9,9 +9,6 @@
 # Run perldoc(1) on this script for additional documentation.
 #
 # TODO messy script, need to cleanup and standardize more.
-#
-# The author disclaims all copyrights and releases this script into
-# the public domain.
 
 use URI;
 
@@ -31,17 +28,16 @@ my $default_open = $ENV{OW_METHOD} || 'lynx';
 
 my %open = (
   firefox       => [qw(open -a Firefox --background)],
-  links         => [qw(links)],
   lwp           => [qw(lwp-request)],
   'lwp-noproxy' => [qw(lwp-request -P)],
   lynx          => [qw(lynx)],
-  mozilla       => [qw(mozilla)],
-  omniweb       => [qw(open -a OmniWeb --background)],
-  'omniweb-bg'  => \&open_omniweb_bg,
   open          => [qw(open --background)],
+  openfg        => [qw(open)],
   pbcopy        => [qw(sgrax pbcopy)],
   safari        => [qw(open -a Safari --background)],
   wget          => [qw(wget)],
+  w3m           => [qw(w3m -M)],
+  xombrero      => [qw(xombrero -n)],                    # requires enable_socket
 );
 
 my %pfiles = (
@@ -56,7 +52,7 @@ getopts( 'h?dlo:T:', \%opts );
 
 if ( exists $opts{h} or $opts{'?'} ) {
   print_help();
-  exit 100;
+  exit 64;
 }
 
 for ( keys %pfiles ) {
@@ -200,7 +196,7 @@ sub expand {
   return $url;
 }
 
-# expects URL to visit, handles lanuching what OS needs.
+# expects URL to visit, handles launching what OS needs.
 sub visit {
   my $url = shift;
   return unless $url;
@@ -213,6 +209,12 @@ sub visit {
 
   my $method = exists $opts{o} ? $opts{o} : $default_open;
   die "error: unknown open method: $method\n" unless exists $open{$method};
+
+  # or otherwise a more complicated configuration that maps certain shortcuts
+  # to certain methods...
+  if ( $url =~ m{^dict://} ) {
+    $method = 'openfg';
+  }
 
   # TODO dispatch table for this
   if ( ref $open{$method} eq 'ARRAY' ) {
@@ -275,7 +277,7 @@ sub tilde_expand {
         || remark('error',
              'could not lookup user or HOME not set',
              { file => $_ })
-        && exit 99;
+        && exit 67;
      }ex;
   }
   return wantarray ? @pathes : "@pathes";
@@ -310,18 +312,16 @@ sub remark {
 
   my $attr_str;
   if ($attributes) {
-    $attr_str = join ', ',
-      map { $attributes->{$_} ||= q{}; "$_=$attributes->{$_}" }
+    $attr_str = join ', ', map { $attributes->{$_} ||= q{}; "$_=$attributes->{$_}" }
       sort keys %$attributes;
   }
 
-  print STDERR "$priority: $message"
-    . ( $attr_str ? ": $attr_str" : q{} ) . "\n";
+  warn "$priority: $message", ( $attr_str ? ": $attr_str" : q{} ), "\n";
   return 1;
 }
 
 sub print_help {
-  print <<"END_USAGE";
+  warn <<"END_USAGE";
 Usage: $0 [options] file [file2 ...]
 
 Command line shortcuts and file to URL mapping.
@@ -348,7 +348,7 @@ ow - command line shortcuts and directory to URL mapping
 
 =head1 SYNOPSIS
 
-Do a Google search for C<foo>. Assumes appropriate shortcut has
+Do a "Google" search for C<foo>. Assumes appropriate shortcut has
 been created.
 
   $ ow g foo
@@ -436,86 +436,42 @@ the value.
 
   # sample shortcuts. A trailing @ is required for parameters that will
   # have macro expansion done on them.
+  ddg@    https://duckduckgo.com/html?q=%@
+  g@      https://duckduckgo.com/html?q=%@
+  gi@     http://images.google.com/images?q=%@&pws=0
+  google@ http://www.google.com/search?num=100&lr=lang_en&q=%@&pws=0
+
+  af      http://www.acronymfinder.com/
+  af@     http://www.acronymfinder.com/af-query.asp?String=exact&Acronym=%1&Find=Find
+
   amazon  http://amazon.com/
-  amazon@ http://amazon.com/exec/obidos/external-search/?mode=blended&keyword=%@
+  amazon@ http://www.amazon.com/s/ref=nb_sb_noss?url=search-alias%3Daps&field-keywords=%@
+  asin@   http://www.amazon.com/o/ASIN/%1
+  isbn@   http://www.amazon.com/o/ASIN/%1
 
-  arin    http://ws.arin.net/
-  arin@   http://ws.arin.net/cgi-bin/whois.pl?queryinput=%@
+  cpan    http://search.metacpan.org/
+  cpan@   https://metacpan.org/search?q=%@
 
-  cpan    http://search.cpan.org/
-  cpan@   http://search.cpan.org/search?query=%@&mode=all
+  # But only on Mac OS X and via open(1) or write appropriate code
+  d@      dict://%1
 
-  d@      http://dictionary.reference.com/search?db=*&q=%@
-
-  dp@     http://www.dogpile.com/info.dogpl/search/web/%@
-
-  dnsr    http://www.DNSreport.com/
-  dnsr@   http://www.DNSreport.com/tools/dnsreport.ch?domain=%@
-
-  fm@     http://freshmeat.net/search/?q=%@
-
-  fr      http://froogle.google.com/
-  fr@     http://froogle.google.com/froogle?q=%@
-  g       http://google.com/
-  g@      http://google.com/search?num=30&lr=lang_en&q=%@
-  gg      http://groups.google.com/advanced_group_search
-  gi      http://images.google.com/
-  gi@     http://images.google.com/images?q=%@
-  gja     http://www.google.co.jp/
-  gja@    http://www.google.co.jp/search?num=100&lr=lang_en&q=%@
-  gn      http://news.google.com/
-  gn@     http://news.google.com/news?q=%@
-
-  mac     http://www.coffer.com/mac_find/
-  mac@    http://www.coffer.com/mac_find/?string=%@
+  imdb    http://www.imdb.com/
+  imdb@   http://www.imdb.com/find?s=all&q=%@
 
   man     http://www.FreeBSD.org/cgi/man.cgi
   man@    http://www.FreeBSD.org/cgi/man.cgi?query=%1
 
-  mapq@   http://www.mapquest.com/
-  mapq@   http://www.mapquest.com/maps/map.adp?fakeTab.x=0&fakeTab.y=0&country=US&countryid=250&addtohistory=&searchtab=address&searchtype=address&address=%1&city=%2&state=%3&zipcode=%4
+  oeis    https://oeis.org/
+  oeis@   https://oeis.org/search?q=%@
 
-  metro   http://transit.metrokc.gov/
-  metro@  http://transit.metrokc.gov/cftemplates/show_schedule.cfm?BUS_ROUTE=%1
-  metroplan       http://tripplanner.metrokc.gov/cgi-bin/itin_page.pl?resptype=U
-
-  msn@    http://search.msn.com/results.aspx?q=%@&FORM=MSNH&srch_type=0
-
-  news    http://news.google.com/
-
-  nut     http://www.nal.usda.gov/fnic/cgi-bin/nut_search.pl
-  nut@    http://www.nal.usda.gov/fnic/cgi-bin/nut_search.pl?%@
-
-  ordb@   http://www.ordb.org/lookup/?host=%1
-
-  perldoc@        http://search.cpan.org/perldoc/%1
+  perldoc@        http://perldoc.perl.org/%1.html
   perlfunc@       http://perldoc.perl.org/functions/%1.html
-  pm      http://www.perlmonks.org/
-  pm@     http://www.perlmonks.org/index.pl?node=%@&go_button=Search
+  perldist@       https://metacpan.org/release/%1
 
-  ripe    http://www.ripe.net/ripencc/pub-services/db/whois/whois.html
-  ripe@   http://www.ripe.net/perl/whois?form_type=simple&full_query_string=&searchtext=%@&do_search=Search
+  rfc@    http://www.faqs.org/rfcs/rfc%1.html
+  rhyme@  http://www.rhymezone.com/r/rhyme.cgi?Word=%1&typeofrhyme=perfect
+  rhyme   http://www.rhymezone.com/
 
-  sbl     http://www.spamhaus.org/SBL
-  sbl@    http://www.spamhaus.org/query/bl?ip=%1
-
-  t@      http://www.thesaurus.com/cgi-bin/search?config=roget&words=%@
-
-  v       http://validator.w3.org/
-  v@      http://validator.w3.org/check?uri=%@
-
-  vt      http://www.versiontracker.com/macosx/
-  vt@     http://www.versiontracker.com/php/search.php?mode=basic&action=search&str=%@&plt%5B%5D=macosx&x=0&y=0
-
-  w3      http://www.w3.org/
-  wikiq   http://en.wikiquote.org/
-  wikiq@  http://en.wikiquote.org/wiki/Special:Search?search=%@&go=Go
-  wp      http://en.wikipedia.org/
-  wp@     http://en.wikipedia.org/wiki/Special:Search?search=%@&go=Go
-  wikit   http://en.wiktionary.org/
-  wikit@  http://en.wiktionary.org/wiki/Special:Search?search=%@&go=Go
-
-  y@      http://search.yahoo.com/search?p=%@&sm=Yahoo%21+Search&fr=FP-tab-web-t&toggle=1&cop=&ei=UTF-8
   # example config END
 
 =head1 DIRECTORY MAPS
@@ -525,8 +481,8 @@ value parameters with limited macro expansion on the URL contained in
 the value. The key is a directory fragment used in a substring match
 against the full directory name being considered.
 
-  # when in checkout of sial.org, map to website
-  co/sial.org/htdocs http://sial.org/%1
+  # when in directory for a website...
+  dir/example.org/htdocs http://devo.example.org/%1
 
   # github example...
   co/scripts http://github.com/thrig/sial.org-scripts/commits/master/%1
@@ -568,11 +524,24 @@ perl(1)
 
 =head1 AUTHOR
 
-Jeremy Mates, http://sial.org/contact/
+thrig - Jeremy Mates (cpan:JMATES) C<< <jmates at cpan.org> >>
 
 =head1 COPYRIGHT
 
-The author disclaims all copyrights and releases this script into the
-public domain.
+Copyright (c) 2015 Jeremy Mates
+
+     Permission to use, copy, modify, and/or distribute this software for
+     any purpose with or without fee is hereby granted, provided that the
+     above copyright notice and this permission notice appear in all
+     copies.
+
+     THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL
+     WARRANTIES WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED
+     WARRANTIES OF MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE
+     AUTHOR BE LIABLE FOR ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL
+     DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM LOSS OF USE, DATA
+     OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER
+     TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
+     PERFORMANCE OF THIS SOFTWARE.
 
 =cut

@@ -1,33 +1,30 @@
-#!/usr/bin/perl
+#!/usr/bin/env perl
 #
-# Wrapper for the Text::Autoformat Perl module. Can be called via a vi
+# Wrapper for the Text::Autoformat Perl module. Can be called via a vi(1)
 # .exrc entry such as:
 #
-# map T !Gautoformat
+#   map T !Gautoformat
 #
-# Or vim 6.3+ .vimrc entry:
+# Or via a vim 6.3+ .vimrc entry, using leader (by default \) to avoid
+# taking over pre-defined vim keys:
 #
-# map T :keepmark .,$!autoformat
+#   map <Leader>a :keepmark .,$!autoformat
 #
-# And then Text::Autoformat options added there after if needed, such as
-# 'right=>72' or similar.
-#
-# http://sial.org/howto/perl/reformat/
-#
-# The author disclaims all copyrights and releases this script into the
-# public domain.
+# So then type \a and then hit enter to run the command, or add
+# Text::Autoformat options, such as  justify=>"center"
 
 use Text::Autoformat;
 
 END {
   # Report problems when writing to stdout (perldoc perlopentut)
   unless ( close(STDOUT) ) {
-    die "error: problem closing STDOUT: $!\n";
+    warn "error: problem closing STDOUT: $!\n";
+    exit 74;
   }
 }
 
 # these are the default preferences
-$default = { squeeze => 1, all => 0 };
+$default = { right => 72, squeeze => 1, all => 0 };
 
 # merge in user prefs from command line
 $input = '$user = {' . $ARGV[0] . '};';
@@ -38,7 +35,7 @@ $options = { %$default, %$user };
 
 $out = autoformat $options;
 
-# KLUGE standardize trailing newline behaviour
+# standardize trailing newline behavior, e.g. strip it.
 chomp $out;
 
 print $out;

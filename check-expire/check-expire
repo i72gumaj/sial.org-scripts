@@ -1,13 +1,11 @@
-#!/usr/bin/perl -w
+#!/usr/bin/env perl
 #
 # Expiration date checker and handler. Supports x509 certificates, and
 # anything a wrapper script can be written for. Run perldoc(1) on this
 # script for additional documentation.
-#
-# The author disclaims all copyrights and releases this script into the
-# public domain.
 
 use strict;
+use warnings;
 
 use Config::General qw(ParseConfig);
 use Date::Parse qw(str2time);
@@ -18,7 +16,8 @@ use Getopt::Std;
 END {
   # Report problems when writing to stdout (perldoc perlopentut)
   unless ( close(STDOUT) ) {
-    die "error: problem closing STDOUT: $!\n";
+    warn "error: problem closing STDOUT: $!\n";
+    exit 74;
   }
 }
 
@@ -44,7 +43,7 @@ if ( exists $opts{l} ) {
 
 if ( exists $opts{h} or exists $opts{'?'} or not @ARGV ) {
   print_help();
-  do_exit(100);
+  do_exit(64);
 }
 
 my %config = ParseConfig( -ConfigFile => $opts{f}, -LowerCaseNames => 1 );
@@ -54,7 +53,7 @@ if ( !defined $config{class} ) {
     'no classes defined in configuration',
     { file => $opts{f} }
   );
-  do_exit(103);
+  do_exit(78);
 }
 
 my $op_mode = shift || q{};
@@ -64,7 +63,7 @@ if ( !exists $actions{$op_mode} ) {
   remark( 'error', 'unknown mode',
     { allowed => join( q{,}, @actions ), mode => $op_mode } );
   print_help();
-  do_exit(101);
+  do_exit(78);
 }
 
 # where in the prefs to read expire, window handlers from
@@ -77,7 +76,7 @@ if ( !defined $report_ref ) {
     'class preferences not found',
     { class => $report_handler, file => $opts{f} }
   );
-  do_exit(103);
+  do_exit(78);
 }
 
 # lookup expiration date and other info via mode handler
@@ -86,7 +85,7 @@ my ( %time_param, %extra_param );
   my ( $time_ref, $extra_ref ) = $actions{$op_mode}->(@ARGV);
   if ( !defined $time_ref or !defined $time_ref->{expire_epoch} ) {
     remark( 'error', 'no expire date found' );
-    do_exit(105);
+    do_exit(78);
   }
   @time_param{ keys %$time_ref }   = values %$time_ref;
   @extra_param{ keys %$extra_ref } = values %$extra_ref;
@@ -123,7 +122,7 @@ if ( exists $report_ref->{window} ) {
       'unexpected reference type for window',
       { ref => ref $report_ref->{window}, file => $opts{f} }
     );
-    do_exit(104);
+    do_exit(78);
   }
 
   # build Windows to look at (sanity checks, duration conversion)
@@ -172,7 +171,7 @@ sub action_openssl_x509 {
   my $results = get_output(@command);
   if ( !defined $results ) {
     remark( 'error', 'no output returned', { command => "@command" } );
-    do_exit(106);
+    do_exit(70);
   }
 
   my ( %time_param, %cert_param );
@@ -211,7 +210,7 @@ sub action_certificate {
   my $results = get_output(@command);
   if ( !defined $results ) {
     remark( 'error', 'no output returned', { command => "@command" } );
-    do_exit(106);
+    do_exit(70);
   }
 
   my ( $tmp_fh, $filename );
@@ -225,7 +224,7 @@ sub action_certificate {
       'no temporary file created',
       ( $@ ? do { chomp $@; { errstr => $@ } } : {} )
     );
-    do_exit(107);
+    do_exit(73);
   }
 
   for my $line (@$results) {
@@ -255,7 +254,7 @@ sub handle_condition {
       my @command = parse_tokens($cmd_str);
       for my $part (@command) {
         $part =~
-          s/ (?<!\\) %{ ([^.]+) \. ([^}]+) } / $lookup_ref->{$1}->{$2} || '' /egx;
+          s/ (?<!\\) \Q%{\E ([^.]+) \. ([^}]+) \Q}\E / $lookup_ref->{$1}->{$2} || '' /egx;
         $part =~ s/(\\.)/qq("$1")/eeg;
       }
 
@@ -280,13 +279,13 @@ sub handle_condition {
       my ( $stdin, $cmd_tmp ) = split /\s*(?<!\\)\|\s*/, $cmd_str, 2;
 
       $stdin =~
-        s/ (?<!\\) %{ ([^.]+) \. ([^}]+) } / $lookup_ref->{$1}->{$2} || '' /egx;
+        s/ (?<!\\) \Q%{\E ([^.]+) \. ([^}]+) \Q}\E / $lookup_ref->{$1}->{$2} || '' /egx;
       $stdin =~ s/(\\.)/qq("$1")/eeg;
 
       my @command;
       for my $part ( parse_tokens($cmd_tmp) ) {
         $part =~
-          s/ (?<!\\) %{ ([^.]+) \. ([^}]+) } / $lookup_ref->{$1}->{$2} || '' /egx;
+          s/ (?<!\\) \Q%{\E ([^.]+) \. ([^}]+) \Q}\E / $lookup_ref->{$1}->{$2} || '' /egx;
         $part =~ s/(\\.)/qq("$1")/eeg;
         push @command, $part;
       }
@@ -304,7 +303,7 @@ sub handle_condition {
       my $lookup_ref = shift;
 
       $output_str =~
-        s/ (?<!\\) %{ ([^.]+) \. ([^}]+) } / $lookup_ref->{$1}->{$2} || '' /egx;
+        s/ (?<!\\) \Q%{\E ([^.]+) \. ([^}]+) \Q}\E / $lookup_ref->{$1}->{$2} || '' /egx;
       $output_str =~ s/(\\.)/qq("$1")/eeg;
       print "$output_str\n";
 
@@ -346,7 +345,7 @@ UBLE: {
     last UBLE if $string =~ / \G $ /gcx;
 
     remark( 'error', 'unparseable token in string', { data => $string } );
-    do_exit(108);
+    do_exit(78);
   }
 
   return @tokens;
@@ -430,12 +429,12 @@ sub duration2seconds {
     }
   } else {
     remark( 'error', 'unknown characters in duration', { data => $tmpdur } );
-    do_exit(109);
+    do_exit(78);
   }
 
   unless ( defined $seconds and $seconds =~ m/^\d+$/ ) {
     remark( 'error', 'unable to parse duration', { data => $tmpdur } );
-    do_exit(109);
+    do_exit(78);
   }
 
   return $seconds;
@@ -463,8 +462,7 @@ sub remark {
       sort keys %$attributes;
   }
 
-  print STDERR "$priority: $message"
-    . ( $attr_str ? ": $attr_str" : q{} ) . "\n";
+  warn "$priority: $message", ( $attr_str ? ": $attr_str" : q{} ), "\n";
   return 1;
 }
 
@@ -561,14 +559,14 @@ for an example. At minimum, a named C<class> block should be created
 with the name C<default>. This block should contain rules to handle
 different conditions: C<expired> will be called if the data is expired,
 followed by any C<window> blocks, ordered to process the shortest
-durations first. If none match, a C<default> hander is called.
+durations first. If none match, a C<default> handler is called.
 
 The first matching handler block will exit the script, with an
 C<exit_value> of zero, unless a different C<exit_value> is set.
 
 Blocks can include C<stdout> to print output, C<exec> to run named
 commands, C<pipe> to send input to a named command, and C<exit_value> to
-change the exit status of C<check-expire>. Aruguments to these options
+change the exit status of C<check-expire>. Arguments to these options
 can template information about the certificate and other data (see the
 example below for the syntax, and the source for available parameters).
 
@@ -662,11 +660,24 @@ perl(1), s_client(1), x509(1)
 
 =head1 AUTHOR
 
-Jeremy Mates, http://sial.org/contact/
+thrig - Jeremy Mates (cpan:JMATES) C<< <jmates at cpan.org> >>
 
 =head1 COPYRIGHT
 
-The author disclaims all copyrights and releases this script into the
-public domain.
+Copyright (c) 2015 Jeremy Mates
+
+     Permission to use, copy, modify, and/or distribute this software for
+     any purpose with or without fee is hereby granted, provided that the
+     above copyright notice and this permission notice appear in all
+     copies.
+
+     THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL
+     WARRANTIES WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED
+     WARRANTIES OF MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE
+     AUTHOR BE LIABLE FOR ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL
+     DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM LOSS OF USE, DATA
+     OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER
+     TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
+     PERFORMANCE OF THIS SOFTWARE.
 
 =cut

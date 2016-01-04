@@ -1,12 +1,10 @@
-#!/usr/bin/perl -w
+#!/usr/bin/env perl
 #
 # Humanize file sizes in input, like the new -h option to various Unix
 # commands. Run perldoc(1) on this file for additional documentation.
-#
-# The author disclaims all copyrights and releases this script into the
-# public domain.
 
 use strict;
+use warnings;
 
 # default to working on runs of 4 or more digits
 my $regex = '(-?\d{4,})';
@@ -14,7 +12,8 @@ my $regex = '(-?\d{4,})';
 END {
   # Report problems when writing to stdout (perldoc perlopentut)
   unless ( close(STDOUT) ) {
-    die "error: problem closing STDOUT: $!\n";
+    warn "error: problem closing STDOUT: $!\n";
+    exit 74;
   }
 }
 
@@ -37,7 +36,7 @@ $base = 1073741824 if exists $opts{G};
 $base = 1048576    if exists $opts{M};
 $base = 1024       if exists $opts{k};
 
-# set different regex if requried, add matching parens if none
+# set different regex if required, add matching parens if none
 # detected in input, as we need to match *something*
 $regex = $opts{m} if exists $opts{m};
 $regex = '(' . $regex . ')' unless $regex =~ m/\(.+\)/;
@@ -82,7 +81,7 @@ sub humanize {
     # include decimals in output? (e.g. 25.8K vs. 26K)
     'decimal' => 1,
 
-    # include .0 in decmail output?
+    # include .0 in decimal output?
     'decimal_zero' => 1,
 
     # what to divide file sizes down by
@@ -104,9 +103,9 @@ sub humanize {
   );
 
   # merge passed options with defaults
-  while ( my ( $k, $v ) = each %$prefs ) {
-    if ( exists $defaults{$k} and $v ) {
-      $defaults{$k} = $v;
+  for my $k ( keys %$prefs ) {
+    if ( exists $defaults{$k} and defined $prefs->{$k} ) {
+      $defaults{$k} = $prefs->{$k};
     }
   }
 
@@ -145,7 +144,7 @@ sub humanize {
 
     $tmp = sprintf( "%.0f", $num );
 
-    } else {
+  } else {
     $tmp = sprintf( "%.1f", $num );
 
     # optionally hack trailing .0
@@ -176,7 +175,7 @@ Options:
 Run perldoc(1) on this script for additional documentation.
 
 HELP
-  exit 101;
+  exit 64;
 }
 
 __END__
@@ -206,7 +205,7 @@ systems:
 
 While certain utilities now support humanized output internally, not
 all systems have those utilities.  Hence, this perl script is intended
-to fill that gap util more utilities support humanization routines
+to fill that gap until more utilities support humanization routines
 directly.  This will become more important as file systems continue to
 grow, and the exact number of bytes something takes up less meaningful
 to the user.
@@ -268,9 +267,9 @@ should be reasonable in most cases.
 
 Your regex should match integers of some kind; otherwise, the script
 will generally do nothing with your data and not print any warnings.
-If you are matching numbers inside of a more complictated regex, you
+If you are matching numbers inside of a more complicated regex, you
 will need to put parentheses around the number you want changed, and
-use non-capturing parentheses for preceeding items, as only $1 is
+use non-capturing parentheses for preceding items, as only $1 is
 passed to the humanizing routine.  See perlre(1) for more details.
 
 If you leave parentheses out of your regex, they will be added around
@@ -310,19 +309,32 @@ perl(1)
 
 =head1 AUTHOR
 
-Jeremy Mates, http://sial.org/contact/
+thrig - Jeremy Mates (cpan:JMATES) C<< <jmates at cpan.org> >>
 
 =head1 COPYRIGHT
 
-The author disclaims all copyrights and releases this script into the
-public domain.
+Copyright (c) 2015 Jeremy Mates
+
+     Permission to use, copy, modify, and/or distribute this software for
+     any purpose with or without fee is hereby granted, provided that the
+     above copyright notice and this permission notice appear in all
+     copies.
+
+     THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL
+     WARRANTIES WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED
+     WARRANTIES OF MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE
+     AUTHOR BE LIABLE FOR ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL
+     DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM LOSS OF USE, DATA
+     OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER
+     TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
+     PERFORMANCE OF THIS SOFTWARE.
 
 =head1 HISTORY
 
 Inspired from the B<-h> option present in GNU df, which is sorely
-lacking in commercial varients of the same name.  (On the other hand,
+lacking in commercial variants of the same name.  (On the other hand,
 leaving the job of humanizing to an external script is probably more
-inline with the Unix philosphopy of filters.)
+inline with the Unix philosophy of filters.)
 
 =head1 SCRIPT CATEGORIES
 

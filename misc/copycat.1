@@ -1,0 +1,112 @@
+.Dd February 1, 2015
+.Dt COPYCAT 1
+.nh
+.Os
+.Sh NAME
+.Nm copycat
+.Nd copy STDIN to both STDOUT and to CLIPBOARD
+.Sh SYNOPSIS
+.Nm copycat
+.Sh DESCRIPTION
+.Nm
+copies any data passed on standard input to both standard output and to the command mentioned in the
+.Ev CLIPBOARD
+environment variable (or to
+.Xr pbcopy 1
+if
+.Ev CLIPBOARD
+is not set).
+.Pp
+If using
+.Xr tmux 1
+via MacPorts on Mac OS X, the tmux-pasteboard MacPorts package may be of service.
+.Pp
+In hindsight,
+.Xr xclip 1x
+does have a
+.Fl filter
+flag, but that would not help on Mac OS X, and 
+.Xr xsel 1x
+is still required if one needs to clear the clipboard.
+.Sh EXAMPLES
+Using 
+.Xr xclip 1x ,
+via a wrapper script.
+.Pp
+.Dl $ export CLIPBOARD=$HOME/libexec/pbcopy
+.Dl $ cat $HOME/libexec/pbcopy
+.Dl #!/bin/sh
+.Dl exec xclip -in
+.Dl $ chmod +x $HOME/libexec/pbcopy
+.Pp
+.Xr xsel 1x
+is another option, also with a wrapper:
+.Pp
+.Dl #!/bin/sh
+.Dl exec xsel --input
+.Pp
+as otherwise
+.Xr xsel 1x
+guesses incorrectly on what to do when used under
+.Xr vi 1 .
+.Pp
+Then, in
+.Xr vi 1
+one may then use a filter via some range to copy the desired lines to the clipboard while also to not destroy that data:
+.Pp
+.Bl -item -offset indent
+.It
+.Ic :%!copycat
+.El
+.Pp
+to copy the entire document to the clipboard, or arbitrary data using arbitrary range statements:
+.Pp
+.Bl -item -offset indent
+.It
+.Ic :.,+4!copycat
+.It
+.Ic ma5k:.,'a!copycat
+.El
+.Pp
+for the present line and following four, or to set a mark, move up some lines, then filter from the current line to that mark. If one moves down, the filter will need to be from the mark to the current line:
+.Pp
+.Bl -item -offset indent
+.It
+.Ic ma5j:'a,.!copycat
+.El
+.Pp
+Though this is all best practiced and made automatic via motor memory. See also "Practical Vim" for other tips.
+.Pp
+In
+.Xr vim 1 ,
+the keepmark statement will be necessary to preserve any marks through the filter:
+.Pp
+.Bl -item -offset indent
+.It
+.Ic :keepmark %!copycat
+.El
+.Pp
+With the X11-enabled version of
+.Xr vim 1
+the special star register should obviate the need for this script, e.g.
+.Bl -item -offset indent
+.It
+.Ic :%y *
+.El
+.Pp
+to yank to the X11 clipboard.
+.Sh EXIT STATUS
+.Ex -std copycat
+.Sh SEE ALSO
+.Xr pbcopy 1 ,
+.Xr vi 1 ,
+.Xr vim 1 ,
+.Xr xclip 1x ,
+.Xr xsel 1x
+.Rs
+.%A Drew Neil
+.%D 2012
+.%B Practical Vim
+.Re
+.Sh AUTHORS
+.An Jeremy Mates

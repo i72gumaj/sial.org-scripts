@@ -1,11 +1,9 @@
-#!/usr/bin/perl -w
+#!/usr/bin/env perl
 #
 # Helper script for cfengine 2.
-#
-# The author disclaims all copyrights and releases this script into the
-# public domain.
 
 use strict;
+use warnings;
 
 use File::Spec ();
 use Getopt::Std qw(getopts);
@@ -14,7 +12,8 @@ use Net::DNS ();
 END {
   # Report problems when writing to stdout (perldoc perlopentut)
   unless ( close(STDOUT) ) {
-    die "error: problem closing STDOUT: $!\n";
+    warn "error: problem closing STDOUT: $!\n";
+    exit 74;
   }
 }
 

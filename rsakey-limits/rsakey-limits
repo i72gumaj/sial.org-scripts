@@ -1,11 +1,8 @@
-#!/usr/bin/perl -w
+#!/usr/bin/env perl
 #
 # Lists maximum length possible of data encrypted with varying RSA key
 # lengths and padding options, along with size of ciphertext (binary
 # format) and the ciphertext encoded in base64 format.
-#
-# The author disclaims all copyrights and releases this script into the
-# public domain.
 
 use Crypt::OpenSSL::Random;
 use Crypt::OpenSSL::RSA;
@@ -15,7 +12,8 @@ use MIME::Base64;
 END {
   # Report problems when writing to stdout (perldoc perlopentut)
   unless ( close(STDOUT) ) {
-    die "error: problem closing STDOUT: $!\n";
+    warn "error: problem closing STDOUT: $!\n";
+    exit 74;
   }
 }
 

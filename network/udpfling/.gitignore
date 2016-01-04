@@ -1,0 +1,4 @@
+*.o
+showip
+udp-sender
+udp-sink
